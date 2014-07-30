@@ -31,8 +31,8 @@ eval "use lib '$pg_dir/lib'"; die $@ if $@;
 
 PerlModule ProblemServer
 
-Alias /ww_question_server_files /opt/webwork/ww_question_server
-<Directory /opt/webwork/ww_question_server>
+Alias /ww_question_server_files /opt/webwork/ww_question_server/htdocs
+<Directory /opt/webwork/ww_question_server/htdocs>
     Allow from all
     AllowOverride None
     Options FollowSymLinks
