@@ -1,14 +1,31 @@
-Webwork Question Server
-----------------------
-Maintainer: Matthew Leventi  <mleventi@gmail.com>
-SVN: http://question.webwork.rochester.edu/svn/ww_question_server/trunk ww_question_server
+Webwork Problem Server
+-----------------------------------
 
-** If your using this send me an email **
+1) Setup
+    a) Change permissions for directories writable by server
+        chmod -R 777 htdocs/tmp
+        chmod -R 777 tmp
 
-Note: You don't need to install the WeBWorK system for this server to function. All you need is the PG libraries.
 
-Setup:
-	1) Run the bin/setup/setup.pl
+2) Configuration
+    The main changes in configuration are in the top of global.conf and in problemserver.apache2-config
+    In problemserver.apache2-config:
+        $problemserver_dir  = The root directory where the problemserver is installed.
+        $pg_dir             = The root directory where the pg is installed.
+        The Alias command should be changed to point to the root directory of problemserver + "/htdocs"
+            ex) Alias /problemserver_files /home/you/problemserver/htdocs
+        The Directory line should be changed to be the same as the second part of the Alias command above
+            ex) <Directory /home/you/problemserver/htdocs>
+    In global.conf
+        $problemServer{host}	= The host the problem server is installed on
+            ex) "http://www.example.org";
+        $pg_dir              	= Same as the $pg_dir for problemserver.apache2-config
+	$problemServerDirs{root}= Same as the $problemserver_dir for problemserver.apache2-config
 
-For more information visit the wiki:
-http://question.webwork.rochester.edu
+        Note: Make sure the paths to the external programs are set correctly for your system.
+        Optionally: On line 163 you can add more paths to look for macro files.
+
+    Finally you need to add an Include statement to your apache2.conf file. This should be located in /etc/apache2/apache2.conf under most systems.
+        ex) Include /home/you/problemserver/conf/problemserver.apache2-config
+
+3) Restart Apache2

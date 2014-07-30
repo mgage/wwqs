@@ -8,13 +8,13 @@ use Opcode qw(empty_opset);
 BEGIN { $main::VERSION = "2.3.2"; }
 
 sub new {
-    my ($self) = @_;
+    my ($self,$path) = @_;
     my $safe = Safe->new;
 
     # Compile the "include" function with all opcodes available.
         my $include = q[ sub include {
 		my ($file) = @_;
-		my $fullPath = "].$ProblemServer::RootDir.q[/$file";
+		my $fullPath = "].$path.q[/$file";
 		# This regex matches any string that begins with "../",
 		# ends with "/..", contains "/../", or is "..".
 		if ($fullPath =~ m!(?:^|/)\.\.(?:/|$)!) {
@@ -38,19 +38,9 @@ sub new {
     $@ and die "Failed to reval include subroutine: $@";
     $safe->mask($maskBackup);
 
-    #die $preps;
-    #$safe->reval($preps);
-    my $globalEnvironmentFile = $ProblemServer::RootDir . "/conf/global.conf";
+    my $globalEnvironmentFile = "$path/conf/global.conf";
+
     my $globalFileContents = readFile($globalEnvironmentFile);
-
-    my $settings = "\$ProblemServer::RootDir = '" . $ProblemServer::RootDir . "';\n";
-    $settings .= "\$ProblemServer::RootPGDir = '" . $ProblemServer::RootPGDir . "';\n";
-    $settings .= "\$ProblemServer::Host = '" . $ProblemServer::Host . "';\n";
-    $settings .= "\$ProblemServer::FilesURL = '" . $ProblemServer::FilesURL . "';\n";
-    $safe->reval($settings);
-
-    #die $globalFileContents;
-    #$globalFileContents = $preps.'\n'.$globalFileContents;
     $safe->reval($globalFileContents);
 
     $@ and die "Could not evaluate global environment file $globalEnvironmentFile: $@";
@@ -78,6 +68,7 @@ sub new {
             $self->{$name} = \%hash;
 	}
     }
+
     bless $self;
     return $self;
 

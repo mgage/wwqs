@@ -2,14 +2,16 @@ package ProblemServer::GeneratorResponse;
 
 =pod
 =begin WSDL
-        _ATTR id $string The ID of the problem
-        _ATTR problems @ProblemServer::ProblemResponse An array of problems that were generated.
+        _ATTR html  $string
+        _ATTR seed  $string
 =end WSDL
 =cut
 sub new {
     my $self = shift;
+    my $data = shift;
     $self = {};
-
+    $self->{html}          = $data->{html};
+    $self->{seed}          = $data->{seed};
     bless $self;
     return $self;
 }
