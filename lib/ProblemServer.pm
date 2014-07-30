@@ -59,8 +59,8 @@ $ProblemServer::theServer = new ProblemServer();
 
 sub translation {
     my ($self,$request) = @_;
-    warn "request", join(" ", %$request);
-    warn "ProblemServer:  starting the translation routine";
+    warn "\n\nProblemServer:  starting the translation routine\n\n";
+     warn "request", join(" ", %$request);
     
     #Install a local warn handler to collect warnings
     my $warnings = "";
@@ -94,6 +94,8 @@ sub translation {
     $self->{problemEnviron}{languageMode}   = $self->{problemEnviron}{displayMode};
     $self->{problemEnviron}{outputMode}		= $self->{problemEnviron}{displayMode};
 
+    warn "\n\n creating image generator \n\n";
+    
     #PREP IMAGE GENERATOR
     my $image_generator;
     if ($request->{displayMode} eq "images") {
@@ -112,8 +114,9 @@ sub translation {
 	);
         #DEFINE CLOSURE CLASS FOR IMAGE GENERATOR
 	$self->{problemEnviron}{imagegen} = new ProblemServer::Utils::RestrictedClosureClass($image_generator, "add");
+	warn "image generator created ";
     }
-
+    warn "image generator: ",join(" ", %$image_generator);
 
 
     #ATTACH THE PROBLEM ENVIRONMENT TO TRANSLATOR
@@ -148,10 +151,12 @@ sub translation {
 
     #CREATE SAFETY FILTER
     $translator->rf_safety_filter(\&ProblemServer::nullSafetyFilter);
-
+    
+    warn "\n\n Begin translating \n\n";
     #RUN
     $translator->translate();
-
+    warn "\n\n Translated --- start processing answers \n\n";
+    
     #PROCESS ANSWERS
     my ($result, $state); # we'll need these on the other side of the if block!
     my $answerArray = $request->{answers};
@@ -167,7 +172,7 @@ sub translation {
             $answerHash->{$answerArray->[$i]{field}} = $answerArray->[$i]{answer};
         }
 	$translator->process_answers($answerHash);
-
+    warn "\n\n Answers processed -- store state\n\n";
 	# retrieve the problem state and give it to the translator
 	#warn "PG: retrieving the problem state and giving it to the translator\n";
 	$translator->rh_problem_state({
@@ -183,7 +188,7 @@ sub translation {
             ? @{ $translator->rh_flags->{ANSWER_ENTRY_ORDER} }
 	    : keys %{ $translator->rh_evaluated_answers };
 
-
+     warn "\n\n State stored -- grade problem \n\n";
 	# install a grader -- use the one specified in the problem,
 	# or fall back on the default from the course environment.
 	# (two magic strings are accepted, to avoid having to
@@ -213,7 +218,8 @@ sub translation {
     my $preview;
     my $answerResponse = {};
     my @answersArray;
-
+    
+    warn "\n\n Problem graded -- generate answer previews \n\n";
     foreach $key (keys %{$answers}) {
         #PREVIEW GENERATOR
         $preview = $answers->{"$key"}->{"preview_latex_string"};
@@ -242,17 +248,18 @@ sub translation {
         $answerResponse->{preview} = encode_base64($preview);
         push(@answersArray, $answerResponse);
     }
-
+    warn "\n\n Answer response prepared --  generating images \n\n";
     #GENERATE IMAGES AS NECESSARY
     if ($image_generator) {
-        $image_generator->render(refresh => 1);
-	$image_generator->render(
-	    body_text => $translator->r_text
-	);
+      eval {
+         $image_generator->render(refresh => 1);
+ 	      $image_generator->render( body_text => $translator->r_text);
+ 	  };
+ 	  warn "errors in image generator ", $@  if $@;
     }
 
 
-
+    warn "\n\n Images generated -- prepare response \n\n";
 
     #WeBWorK::PG::Translator::pretty_print_rh($answers->{"0AnSwEr1"});
     #die($warnings);
@@ -268,7 +275,9 @@ sub translation {
     $response->{head_text} = encode_base64(${$translator->r_header});
     $response->{state} = "0";
     $response->{result} = $request->{displayMode};
-    warn "\nRendered response ", join( " ", %$response);
+
+    warn "\n\nRendered response \n\n", join( " ", %$response), "\n\n";
+    warn "\n\n Translate subroutine is done \n-----------------------------------\n\n";
     return $response;
 }
 
